@@ -1,26 +1,23 @@
 package main
 
 import (
-	"Project1GO/Solver"
+	"Project1GO/solver"
 	"fmt"
 )
 
 func main() {
-
 	chunkDimension := 150
-	records, err := Solver.ReadCsv("input.csv")
+	records, err := solver.ReadCsv("input.csv")
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Println("File was opened successfully")
-		finalRecords := Solver.DeleteInvalidLines(records)
-		err2 := Solver.SplitAndWrite(finalRecords, chunkDimension)
-		if err2 != nil {
-			fmt.Println(err2)
-		} else {
-			fmt.Println("Data was split and written successfully")
-		}
-
+		return
 	}
-
+	fmt.Println("File was opened successfully")
+	finalRecords := solver.DeleteInvalidLines(records)
+	err2 := solver.SplitAndWrite(finalRecords, chunkDimension)
+	if err2 != nil {
+		fmt.Println(err2)
+		return
+	}
+	fmt.Println("Data was split and written successfully")
 }
