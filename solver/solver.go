@@ -4,52 +4,21 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"log"
+	"io"
 	"os"
 )
 
 // ReadCsv reads a CSV input file and returns the records from the CSV in a slice with 2 dimensions and an error.
 // If the file could not be opened the error will be different than nil and will be returned.
-func ReadCsv(filePath string) ([][]string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	csvReader := csv.NewReader(file)
+func ReadCsv(reader io.Reader) ([][]string, error) {
+	csvReader := csv.NewReader(reader)
 	records, err := csvReader.ReadAll()
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
-
-	if err := file.Close(); err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
 	return records, nil
 }
-
-//func ReadCsv2(filePath string, reader csv.Reader) ([][]string, error) {
-//	file, err := os.Open(filePath)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	records, err := reader.ReadAll()
-//	if err != nil {
-//		fmt.Println(err)
-//		return nil, err
-//	}
-//
-//	if err := file.Close(); err != nil {
-//		log.Fatal(err)
-//		return nil, err
-//	}
-//
-//	return records, nil
-//}
 
 // DeleteInvalidLines takes as an input a 2D slice of strings and check for each element if it has a valid value.
 // When an element of a record is detected to be empty, the method deletes the entire record(line) from the slice.
@@ -126,6 +95,9 @@ func WriteCSV(records [][]string, fName string) error {
 		}
 	}
 	csvWriter.Flush()
+	if csvWriter.Error() != nil {
+		fmt.Println("Error when flushing")
+	}
 	err = csvFile.Close()
 	if err != nil {
 		return err

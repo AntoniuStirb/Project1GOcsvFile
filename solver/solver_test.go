@@ -1,8 +1,11 @@
 package solver
 
 import (
+	"errors"
 	"github.com/google/go-cmp/cmp"
+	"io"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -150,52 +153,49 @@ func TestSplitFile(t *testing.T) {
 	}
 }
 
-//func openSuccesfulFaker(name string) (*os.File, error) {
-//	return new(os.File), nil
-//}
-//
-//func readSuccesfulFaker(r io.Reader) *io.Reader {
-//	return new(io.Reader)
-//}
-//
-//func realAllSuccesfulFaker() (records [][]string, err error) {
-//	var data [][]string
-//	return data, nil
-//}
-//
-//func closeSuccesfulFaker() error {
-//	return nil
-//}
-//
-//type fakeReader struct {
-//	csv.Reader
-//}
-//
-//func (f fakeReader) ReadAll() (records [][]string, err error) {
-//	return nil, errors.New("eroare")
-//}
+type fakeReader struct {
+	r           io.Reader
+	returnedErr error
+}
 
-//func TestReadCSV2(t *testing.T) {
-//	wrongCsvPath := "filepathwrong.csv"
-//	expectedOutput := true
-//	_, err := ReadCsv(wrongCsvPath)
-//	if err != nil {
-//		t.Errorf("ReadCsv() error = %v, wantErr %v", err, expectedOutput)
-//		return
-//	}
-//}
+func (f *fakeReader) Read(p []byte) (n int, err error) {
+	if f.returnedErr != nil {
+		return n, f.returnedErr
+	}
+	return f.r.Read(p)
 
-//func TestReadCsv2(t *testing.T) {
-//	records, err := ReadCsv2("", fakeReader)
-//	if err != nil {
-//		t.Errorf("eroare")
-//	}
-//
-//	t.Run(test.name, func(t *testing.T) {
-//		actualOutput := DeleteInvalidLines(test.input)
-//		if diff := cmp.Diff(actualOutput, test.expectedOutput); diff != "" {
-//			t.Errorf("TestedDeleteInvalidLines() does not meet expectations, "+
-//				"\nactual=%#v, \nexpected=%#v, \nDIFF: %v", actualOutput, test.expectedOutput, diff)
-//		}
-//	})
-//}
+}
+
+func TestReadCsv(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   io.Reader
+		want    [][]string
+		wantErr bool
+	}{
+		{
+			name:    "Error flow test",
+			input:   &fakeReader{returnedErr: errors.New("Test error")},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Flow without error",
+			input:   &fakeReader{r: strings.NewReader("tata,are,pere")},
+			want:    [][]string{{"tata", "are", "pere"}},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ReadCsv(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ReadCsv() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ReadCsv() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

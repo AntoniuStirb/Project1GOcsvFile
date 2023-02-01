@@ -4,12 +4,22 @@ import (
 	"Project1GO/solver"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 )
 
 func main() {
 	chunkDimension := 150
-	records, err := solver.ReadCsv("input.csv")
+	inputPath := "input.csv"
+
+	file, err := os.Open(inputPath)
+	if err != nil {
+		fmt.Printf("Unable to open file, reason: %v", err)
+		return
+	}
+	defer file.Close() //don't care about err in this case, as all is getting the data, once, from file
+
+	records, err := solver.ReadCsv(file)
 	if err != nil {
 		fmt.Printf("Unable to read the input, reason: %v", err)
 		return
@@ -22,7 +32,7 @@ func main() {
 	}
 
 	finalRecords := solver.SplitFile(chunkDimension, recordsBeforeSplit)
-	if chunkDimension == 0 || len(finalRecords) == chunkDimension {
+	if len(finalRecords) == chunkDimension {
 		fmt.Println("ChunkSize is invalid")
 		return
 	}
